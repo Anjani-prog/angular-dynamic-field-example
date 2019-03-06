@@ -1,28 +1,16 @@
 <div class="row">
     <div class="col-md-12 col-xs-12">
         <div class="x_panel">
-            <h2>{{ actionType }} Plans</h2>
+            <h2>{{ action_type }} Exam Shedule</h2>
         </div>
     </div>
 </div>
+
 <div class="row">
     <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
-            <form [formGroup]="planForm" (ngSubmit)="onSubmit()">
+            <form [formGroup]="examsheduleForm" (ngSubmit)="onSubmit()">
                 <div class="row">
-                    <div class="col-sm-12 col-md-3" [ngClass]="{ 'has-error': submitted && f.plantypes.errors }">
-                        <label>Plan Type:</label>
-                        <span> <font color="red"> * </font></span>
-                        <select class="form-control" formControlName="plantypes" [ngClass]="{ 'has-error': submitted && f.plantypes.errors }">
-                            <option disabled value="">---- Select ----</option>
-                            <option value="0">Gold</option>
-                            <option value="1">Silver</option>
-                            <option value="2">Bronze</option>
-                        </select>
-                        <div *ngIf="submitted && f.plantypes.errors" class="help-block">
-                            <div *ngIf="f.plantypes.errors.required">Plan Type is required</div>
-                        </div>
-                    </div>
                     <div class="col-sm-12 col-md-3" [ngClass]="{ 'has-error': submitted && f.name.errors }">
                         <label>Name</label>
                         <span> <font color="red"> * </font></span>
@@ -31,22 +19,19 @@
                             <div *ngIf="f.name.errors.required">Name is required</div>
                         </div>
                     </div>
-                    <div class="col-sm-12 col-md-3" [ngClass]="{ 'has-error': submitted && f.description.errors }">
-                        <label>Description</label>
-                        <input type="text" formControlName="description" class="form-control" placeholder="Description" />
-                    </div>
-                    <div class="col-sm-12 col-md-3" [ngClass]="{ 'has-error': submitted && f.cost.errors }">
-                        <label>Cost</label>
+                    <div class="col-sm-12 col-md-3" [ngClass]="{ 'has-error': submitted && f.clas.errors }">
+                        <label>Class:</label>
                         <span> <font color="red"> * </font></span>
-                        <input type="text" formControlName="cost" class="form-control" placeholder="Cost" />
-                        <div *ngIf="submitted && f.cost.errors" class="help-block">
-                            <div *ngIf="f.cost.errors.required">Cost is required</div>
-                            <div *ngIf="f.cost.errors.pattern">Cost must be valid</div>
+                        <select class="form-control" formControlName="clas" (change)="getSubjects()" [ngClass]="{ 'has-error': submitted && f.clas.errors }">
+                            <option disabled value="">---- Select ----</option>
+                            <option *ngFor="let class of classes" [value]="class.id">{{class.class_name}} {{class.class_division}}
+                            </option>
+                        </select>
+                        <div *ngIf="submitted && f.clas.errors" class="help-block">
+                            <div *ngIf="f.clas.errors.required">Class is required</div>
                         </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-sm-12 col-md-3" [ngClass]="{ 'has-error': submitted && f.plantypes.errors }">
+                    <div class="col-sm-12 col-md-3" [ngClass]="{ 'has-error': submitted && f.status.errors }">
                         <label>Status:</label>
                         <span><font color="red"> * </font></span>
                         <select class="form-control" formControlName="status">
@@ -54,65 +39,84 @@
                             <option value="0">UnPublish</option>
                             <option value="1">Publish </option>
                         </select>
-                        <div *ngIf="submitted && f.plantypes.errors" class="help-block">
-                            <div *ngIf="f.plantypes.errors.required">Status is required</div>
+                        <div *ngIf="submitted && f.status.errors" class="help-block">
+                            <div *ngIf="f.status.errors.required">Status is required</div>
                         </div>
                     </div>
-                </div>
-                <!-- <div class="row"> <button type="button" mat-raised-button (click)="addUnit()">
-                        Add new unit
-                    </button></div> -->
-                <div class="row">
-                    <div style="margin-top: 25px; margin-left: 15px; margin-bottom: 25px;">
+                    <div style="margin-right: 15px; margin-top: 25px;">
                         <div class="input-group-btn">
-                            <button class="btn btn-info pull-center btn-sm addmore" type="button" (click)="addUnit()"><i
-                                    class="fa fa-plus-square"></i>
-                                Add Stages</button>
+                            <button class="btn btn-info btn-sm addmore" type="button" (click)="addUnit()"><i class="fa fa-plus-square"></i>
+                                Add Exams</button>
                         </div>
                     </div>
                 </div>
                 <div class="row">
                     <div formArrayName="units">
-                        <div *ngFor="let unit of planForm.controls.units.controls; let i=index">
-                            <div *ngIf="planForm.controls.units.controls.length > 1 && i > 0"></div><br>
+                        <div *ngFor="let unit of examsheduleForm.controls.units['controls']; let i=index">
+                            <div *ngIf="examsheduleForm.controls.units.controls.length > 1 && i > 0"></div><br>
                             <div class="row" style=" margin-left: 5px;" [formGroupName]="i">
-                                <div class="col-sm-12 col-md-3" [ngClass]="{ 'has-error': submitted && stageat(i).errors }">
-                                    <label>Stage</label>
+                                <div class="col-sm-12 col-md-2" [ngClass]="{ 'has-error': submitted && unit.controls.subject.errors }">
+                                    <label>Subject:</label>
                                     <span> <font color="red"> * </font></span>
-                                    <div class="input-group">
-                                        <select class="form-control" formControlName="stage">
-                                            <option disabled value="">---- Select ----</option>
-                                            <option *ngFor="let stage of stages" [value]="stage.id">{{stage.name}}</option>
-                                        </select>
-                                        <span class="input-group-btn">
-                                            <button class="btn btn-danger remove" type="button" *ngIf="planForm.controls.units.controls.length > 0" (click)="removeUnit(i)"><i
-                                                    class="fa fa-trash-o" style="color:white" aria-hidden="true"></i>
-                                            </button>
-                                        </span>
+                                    <select class="form-control" formControlName="subject" [ngClass]="{ 'has-error': submitted && unit.get('subject').errors }">
+                                        <option disabled value="">---- Select ----</option>
+                                        <option *ngFor="let subject of subjects" [value]="subject.id">{{ subject.subject_name}}
+                                        </option>
+                                    </select>
+                                    <div *ngIf="submitted && unit.controls.subject.errors" class="help-block">
+                                        <div *ngIf="unit.controls.subject.errors.required">Subject is required</div>
                                     </div>
-                                    <div *ngIf="submitted && stageat(i).errors" class="help-block">
-                                        <div *ngIf="stageat(i).errors.required">
-                                            Stage is required
-                                        </div>
+                                </div>
+                                <div class="col-sm-12 col-md-2" [ngClass]="{ 'has-error': submitted && unit.controls.date.errors }">
+                                    <label>Date:</label>
+                                    <span> <font color="red"> * </font></span>
+                                    <input readonly type="text" name="date" placeholder="Date" class="form-control" bsDatepicker [bsConfig]="{dateInputFormat: 'DD/MM/YYYY', containerClass: 'theme-dark-blue'}"
+                                        formControlName="date" autocomplete="off">
+                                    <div *ngIf="submitted && unit.controls.date.errors" class="help-block">
+                                        <div *ngIf="unit.controls.date.errors.required">Date is required</div>
                                     </div>
+                                </div>
+                                <div class="col-sm-12 col-md-2" [ngClass]="{ 'has-error': submitted && unit.controls.starting_time.errors }">
+                                    <label>Start Time:</label>
+                                    <span> <font color="red"> * </font></span>
+                                    <!-- <timepicker formControlName="starting_time" [showMeridian]="isMeridian"></timepicker> -->
+                                    <input type="time" formControlName="starting_time" class="form-control" placeholder="Start Time" required/>
+                                    <div *ngIf="submitted && unit.controls.starting_time.errors" class="help-block">
+                                        <div *ngIf="unit.controls.starting_time.errors.required">Start Time is required</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 col-md-2" [ngClass]="{ 'has-error': submitted && unit.controls.ending_time.errors }">
+                                    <label>End Time:</label>
+                                    <span> <font color="red"> * </font></span>
+                                    <input type="time" formControlName="ending_time" class="form-control" placeholder="End Time" required />
+                                    <div *ngIf="submitted && unit.controls.ending_time.errors" class="help-block">
+                                        <div *ngIf="unit.controls.ending_time.errors.required">End Time is required</div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 23px;">
+                                    <button class="btn btn-danger remove" type="button" *ngIf="examsheduleForm.controls.units.controls.length > 0" (click)="removeUnit(i)"><i
+                                            class="fa fa-trash-o" style="color:white" aria-hidden="true"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <hr/>
+                <hr />
                 <div class="row">
                     <div class="col-md-6 col-md-offset-6">
+
                         <div *ngIf="errors" class="alert alert-danger">{{errors.error|json}}</div>
-                        <a class="btn btn-danger pull-right" [routerLink]="'/company/plans/'"><i class="fa fa-close"></i>
-                            Cancel</a>
-                        <button class="btn btn-primary pull-right" [disabled]="loading" type="submit">{{ actionType }}
+                        <!--<a class="btn btn-warning pull-right" [routerLink]="'/controlpanel/users/'"> Cancel</a>-->
+                        <a class="btn btn-danger pull-right" [routerLink]="'/academics/examshedule/'">
+                            <i class="fa fa-close"></i> Cancel</a>
+                        <button class="btn btn-primary pull-right" [disabled]="loading" type="submit">{{ form_action }}
                         </button>
 
                     </div>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
