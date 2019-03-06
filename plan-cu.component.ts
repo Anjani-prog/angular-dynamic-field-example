@@ -1,117 +1,148 @@
-
-
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { PlanService } from '../plan.service';
-import { StagesService } from '../../stages/stages.service';
+import { ExamShedulesService } from '../examshedules.service';
+import { ClassesService } from '../../../academics/classes/classes.service';
+import { ToastrService } from 'ngx-toastr';
+import * as moment from 'moment';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 
 @Component({
-    selector: 'app-plan-cu',
-    templateUrl: '../pages/plan-cu.component.html',
+    selector: 'app-examshedules-cu',
+    templateUrl: '../pages/examshedules-cu.component.html'
 })
 
-export class PlanCuComponent implements OnInit {
-    planForm: FormGroup;
+export class ExamShedulesCuComponent implements OnInit, OnDestroy {
+    examsheduleForm: FormGroup;
     submitted = false;
-    planId: string;
-    actionType = 'Add';
+    examsheduleId: string;
+    action_type = 'Add';
+    form_action = 'Save';
     loading = false;
-    loadingFrm = true; // used to hide edit form while fetching
-    plan: any = {};
-    stages: any = [];
+    loading_frm = true; // used to hide edit form while fetching
+    classes: any = [];
     errors: string;
     myFormValueChanges$;
+    id: string;
+    subjects: any = [];
+    // if(date) {
+    //     this.examshedule.date = moment(date, 'DD/MM/YYYY').format('YYYY-MM-DD');
+    // }
+
 
     constructor(
-        private planService: PlanService,
-        private stageservice: StagesService,
+        private toastr: ToastrService,
+        private examsheduleService: ExamShedulesService,
+        private classesservice: ClassesService,
+
         private route: ActivatedRoute,
         private router: Router,
         private formBuilder: FormBuilder) { }
 
-    public getstages() {
-        this.stageservice.getStages().subscribe((data: any) => {
-            this.stages = data;
+    public getclasses() {
+        this.classesservice.getClassess().subscribe((data: any) => {
+            this.classes = data;
+
+
+        });
+    }
+    public getSubjects() {
+        const value = this.examsheduleForm.get('clas').value;
+        this.examsheduleService.getSubjects(value).subscribe((data: Array<object>) => {
+            this.subjects = data;
+
         });
     }
     private getUnit() {
         return this.formBuilder.group({
-            stage: ['', Validators.required],
+            subject: ['', Validators.required],
+            date: ['', Validators.required],
+            starting_time: ['', Validators.required],
+            ending_time: ['', Validators.required],
         });
     }
+
     ngOnInit() {
-        this.getstages();
-        this.planForm = this.formBuilder.group({
+        this.getclasses();
+        this.examsheduleForm = this.formBuilder.group({
             id: [''],
-            plantypes: ['', Validators.required],
             name: ['', Validators.required],
-            description: [''],
-            cost: ['', [Validators.required, Validators.pattern('^[0-9]{0,50}$')]],
+            clas: ['', Validators.required],
             status: ['', Validators.required],
             units: this.formBuilder.array([
-                // this.getUnit() // for dynamic fields
             ])
         });
         // initialize stream on units
-        this.myFormValueChanges$ = this.planForm.controls['units'].valueChanges;
+        this.myFormValueChanges$ = this.examsheduleForm.controls['units'].valueChanges;
         // subscribe to the stream so listen to changes on units
-        this.planId = this.route.snapshot.paramMap.get('id');
-        if (this.planId) {
-            this.actionType = 'Update';
-            this.loadingFrm = false;
-            this.planService.getPlan(this.planId)
+        this.examsheduleId = this.route.snapshot.paramMap.get('id');
+        if (this.examsheduleId) {
+            this.action_type = 'Update';
+            this.loading_frm = false;
+            this.examsheduleService.getExamShedule(this.examsheduleId)
                 .subscribe(data => {
-                    this.loadingFrm = true; // show edit form
-                    this.planForm.patchValue(data);
-                    const planexecutionstages = data['planexecutionstages'];
+                    this.loading_frm = true; // show edit form
+                    this.examsheduleForm.patchValue(data);
+                    const examshedulefields = data['examshedulefields'];
+                    this.getSubjects();
                     // for dynamic fields get value for update
-                    if (planexecutionstages) {
-                        const control = this.planForm.controls['units'] as FormArray;
-                        planexecutionstages.forEach(stages => {
+                    if (examshedulefields) {
+                        const control = this.examsheduleForm.controls['units'] as FormArray;
+                        examshedulefields.forEach(stages => {
                             const formBuilder = this.getUnit();
-                            formBuilder.patchValue({ stage: stages['executionstages'] });
+                            formBuilder.patchValue({ subject: stages['exam_subject'] });
+                            formBuilder.patchValue({ date: moment(stages['date']).format('DD/MM/YYYY') });
+                            formBuilder.patchValue({ starting_time: stages['starting_time'] });
+                            formBuilder.patchValue({ ending_time: stages['ending_time'] });
                             control.push(formBuilder);
                         });
                     }
                 });
         }
+
     }
-    // convenience getter for easy access to form fields
-    get f() { return this.planForm.controls; }
-    private addUnit() {
-        const control = this.planForm.controls['units'] as FormArray;
+
+    get f() { return this.examsheduleForm.controls; }
+    ngOnDestroy(): void {
+        // Do not forget to unsubscribe the event
+    }
+
+    disablegradeType(action_type: any) {
+        if (action_type === 'Update') {
+            return 'true';
+        }
+        return 'false';
+    }
+    addUnit() {
+        const control = this.examsheduleForm.controls['units'] as FormArray;
         control.push(this.getUnit());
     }
 
     /**
      * Remove unit row from form on click delete button
      */
-    private removeUnit(i: number) {
-        const control = this.planForm.controls['units'] as FormArray;
+    removeUnit(i: number) {
+        const control = this.examsheduleForm.controls['units'] as FormArray;
         control.removeAt(i);
     }
-    stageat(index) {
-        return (this.planForm.get('units') as FormArray).at(index);
-    }
+
 
     onSubmit() {
         this.submitted = true;
         // stop here if form is invalid
-        if (this.planForm.invalid) {
+        if (this.examsheduleForm.invalid) {
             return;
         }
-        // alert('SUCCESS!! :-)\n\n' + JSON.stringify(this.planForm.value));
+        // alert('SUCCESS!! :-)\n\n' + JSON.stringify(this.examsheduleForm.value));
         this.loading = true;
         let myhttpService;
-        if (this.actionType === 'Add') {
-            myhttpService = this.planService.postPlan(this.planForm.value);
-        } else if (this.actionType === 'Update') {
-            myhttpService = this.planService.updatePlan(this.planId, this.planForm.value);
+        if (this.action_type === 'Add') {
+            myhttpService = this.examsheduleService.postExamShedule(this.examsheduleForm.value);
+        } else if (this.action_type === 'Update') {
+            myhttpService = this.examsheduleService.updateExamShedule(this.examsheduleId, this.examsheduleForm.value);
         }
 
         myhttpService.subscribe((response) => {
-            this.router.navigate(['/company/plans/']);
+            this.router.navigate(['/academics/examshedule/']);
         }, // success
             error => {
                 this.errors = error;
